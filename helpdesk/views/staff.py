@@ -410,14 +410,22 @@ def update_ticket(request, ticket_id, public=False):
     if request.FILES:
         import mimetypes, os
         for file in request.FILES.getlist('attachment'):
-            filename = file.name.replace(' ', '_')
+            # this is a very weak check, filename might still contain illegal characters.
+            # filename = file.name.replace(' ', '_')
+            # 
+            # convert file.name to ascii and ignore any unsupported characters.
+            filename_display = file.name.encode('ascii', 'ignore')
+            # alternatively, we can produce a file system safe string, but
+            # we lose the file extension.
+            # import base64
+            # filename_display = base64.urlsafe_b64encode(filename_display)
             a = Attachment(
                 followup=f,
-                filename=filename,
-                mime_type=mimetypes.guess_type(filename)[0] or 'application/octet-stream',
+                filename=filename_display,
+                mime_type=mimetypes.guess_type(filename_display)[0] or 'application/octet-stream',
                 size=file.size,
                 )
-            a.file.save(file.name, file, save=False)
+            a.file.save(filename_display, file, save=False)
             a.save()
 
             if file.size < getattr(settings, 'MAX_EMAIL_ATTACHMENT_SIZE', 512000):
