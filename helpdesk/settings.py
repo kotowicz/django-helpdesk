@@ -72,6 +72,8 @@ HELPDESK_CUSTOM_WELCOME = getattr(settings, 'HELPDESK_CUSTOM_WELCOME', False)
 # auto-subscribe user to ticket if (s)he responds to a ticket?
 HELPDESK_AUTO_SUBSCRIBE_ON_TICKET_RESPONSE = getattr(settings, 'HELPDESK_AUTO_SUBSCRIBE_ON_TICKET_RESPONSE', False)
 
+# assign new tickets to this queue by default (queue must be created manually)
+HELPDESK_NEW_TICKETS_DEFAULT_QUEUE = getattr(settings, 'HELPDESK_NEW_TICKETS_DEFAULT_QUEUE', False)
 
 
 ''' options for public pages '''

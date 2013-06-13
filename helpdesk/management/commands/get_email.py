@@ -29,6 +29,7 @@ from django.conf import settings
 
 from helpdesk.lib import send_templated_mail, safe_template_context
 from helpdesk.models import Queue, Ticket, FollowUp, Attachment, IgnoreEmail
+from helpdesk import settings as helpdesk_settings
 
 
 class Command(BaseCommand):
@@ -150,7 +151,8 @@ def ticket_from_message(message, queue, quiet):
     message = email.message_from_string(msg)
     subject = message.get('subject', _('Created from e-mail'))
     subject = decode_mail_headers(decodeUnknown(message.get_charset(), subject))
-    subject = subject.replace("Re: ", "").replace("Fw: ", "").replace("RE: ", "").replace("FW: ", "").replace("Automatic reply: ", "").strip()
+    # ignore most common "out of office replies".
+    subject = subject.replace("Re: ", "").replace("Fw: ", "").replace("RE: ", "").replace("FW: ", "").replace("Automatic reply: ", "").replace("Abwesenheitsnotiz", "").strip()
 
     sender = message.get('from', _('Unknown Sender'))
     sender = decode_mail_headers(decodeUnknown(message.get_charset(), sender))
@@ -235,6 +237,13 @@ def ticket_from_message(message, queue, quiet):
         priority = 2
 
     if ticket == None:
+        # hack: in case ticket is new, assign to HELPDESK_NEW_TICKETS_DEFAULT_QUEUE. 
+        # Otherwise the system will create a new ticket in the currently processed 'queue'
+        if helpdesk_settings.HELPDESK_NEW_TICKETS_DEFAULT_QUEUE:
+            try:
+                queue = Queue.objects.filter(title = helpdesk_settings.HELPDESK_NEW_TICKETS_DEFAULT_QUEUE)[0]
+            except:
+                pass
         t = Ticket(
             title=subject,
             queue=queue,
